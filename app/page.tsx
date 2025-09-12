@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Chat } from './chat'
 import { FileExplorer } from './file-explorer'
 import { Header } from './header'
@@ -7,7 +8,8 @@ import { TabItem, TabContent, TabGroup } from '@/components/tabs'
 
 export default async function Page() {
   return (
-    <><div className="flex flex-col h-screen max-h-screen overflow-hidden p-2 space-x-2 space-y-2">
+    <>
+      <Suspense fallback={<div />}><div className="flex flex-col h-screen max-h-screen overflow-hidden p-2 space-x-2 space-y-2">
         <Header className="flex items-center w-full" />
         <ul className="flex space-x-5 lg:hidden font-mono text-sm tracking-tight mt-1.5 px-1">
           <TabItem tabId="chat">Chat</TabItem>
@@ -35,6 +37,7 @@ export default async function Page() {
           </TabGroup>
         </div>
       </div>
+      </Suspense>
     </>
   )
 }
