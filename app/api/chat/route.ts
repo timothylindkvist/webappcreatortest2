@@ -1,61 +1,36 @@
-import {
-  type UIMessage,
-  convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  stepCountIs,
-  streamText,
-} from 'ai'
-import { DEFAULT_MODEL } from '@/ai/constants'
-import { NextResponse } from 'next/server'
-import { getAvailableModels, getModelOptions } from '@/ai/gateway'
-import { tools } from '@/ai/tools'
-import prompt from './prompt.md'
+import { NextRequest } from 'next/server'
 
-interface BodyData {
-  messages: UIMessage[]
-  modelId?: string
-}
+// Make sure you set OPENAI_API_KEY in Vercel dashboard
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY as string
 
-export async function POST(req: Request) {
-  const [models, { messages, modelId = DEFAULT_MODEL }] = await Promise.all([
-    getAvailableModels(),
-    req.json() as Promise<BodyData>,
-  ])
+export async function POST(req: NextRequest) {
+  try {
+    const { messages } = await req.json()
 
-  const model = models.find((model) => model.id === modelId)
-  if (!model) {
-    return NextResponse.json(
-      { error: `Model ${modelId} not found.` },
-      { status: 400 }
-    )
-  }
-
-  return createUIMessageStreamResponse({
-    stream: createUIMessageStream({
-      originalMessages: messages,
-      execute: ({ writer }) => {
-        const result = streamText({
-          ...getModelOptions(modelId),
-          system: prompt,
-          messages: convertToModelMessages(messages),
-          stopWhen: stepCountIs(20),
-          tools: tools({ modelId, writer }),
-          onError: (error) => {
-            console.error('Error communicating with AI')
-            console.error(JSON.stringify(error, null, 2))
-          },
-        })
-        result.consumeStream()
-        writer.merge(
-          result.toUIMessageStream({
-            sendStart: false,
-            messageMetadata: () => ({
-              model: model.name,
-            }),
-          })
-        )
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-    }),
-  })
+      body: JSON.stringify({
+        model: 'gpt-5',   // you wanted GPT-5
+        messages,
+        stream: false,    // set to true if you want streaming
+      }),
+    })
+
+    if (!resp.ok) {
+      const err = await resp.text()
+      return new Response(JSON.stringify({ error: err }), { status: 500 })
+    }
+
+    const data = await resp.json()
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+  }
 }
