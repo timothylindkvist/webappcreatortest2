@@ -9,7 +9,6 @@ import {
 import { DEFAULT_MODEL } from '@/ai/constants'
 import { NextResponse } from 'next/server'
 import { getAvailableModels, getModelOptions } from '@/ai/gateway'
-import { checkBotId } from 'botid/server'
 import { tools } from '@/ai/tools'
 import prompt from './prompt.md'
 
@@ -19,11 +18,6 @@ interface BodyData {
 }
 
 export async function POST(req: Request) {
-  const checkResult = await checkBotId()
-  if (checkResult.isBot) {
-    return NextResponse.json({ error: `Bot detected` }, { status: 403 })
-  }
-
   const [models, { messages, modelId = DEFAULT_MODEL }] = await Promise.all([
     getAvailableModels(),
     req.json() as Promise<BodyData>,
