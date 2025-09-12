@@ -1,7 +1,7 @@
 'use client'
 
 import type { ChatUIMessage } from '@/components/chat/types'
-import { DEFAULT_MODEL, TEST_PROMPTS, SUPPORTED_MODELS } from '@/ai/constants'
+import { TEST_PROMPTS } from '@/ai/constants'
 import { MessageCircleIcon, SendIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,6 @@ import { Message } from '@/components/chat/message'
 import { MoonLoader } from 'react-spinners'
 import { Panel, PanelHeader } from '@/components/panels/panels'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { createParser, useQueryState } from 'nuqs'
 import { toast } from 'sonner'
 import { mutate } from 'swr'
 import { useChat } from '@ai-sdk/react'
@@ -23,7 +22,7 @@ interface Props {
 }
 
 export function Chat({ className }: Props) {
-  const [modelId, setModelId] = useQueryState('modelId', modelParser)
+  const [modelId, setModelId] = ('modelId', modelParser)
   const [input, setInput] = useLocalStorageValue('prompt-input')
   const mapDataToState = useDataStateMapper()
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -90,6 +89,13 @@ export function Chat({ className }: Props) {
         )}
       </div>
 
+      <form
+        className="card sticky bottom-0 left-0 right-0 mx-2 mb-2 flex gap-2 p-3 items-center backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:supports-[backdrop-filter]:bg-neutral-900/40"
+        onSubmit={async (event) => {
+          event.preventDefault()
+          validateAndSubmitMessage(input)
+        }}
+      >
         
         {/* Quick actions */}
         <ul className="hidden md:flex gap-2 mr-2">
@@ -125,7 +131,4 @@ export function Chat({ className }: Props) {
   )
 }
 
-const modelParser = createParser({
-  parse: (value) => (SUPPORTED_MODELS.includes(value) ? value : DEFAULT_MODEL),
-  serialize: (value) => value,
-}).withDefault(DEFAULT_MODEL)
+const modelId = 'gpt-5'
