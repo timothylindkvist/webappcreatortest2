@@ -22,7 +22,8 @@ interface Props {
 }
 
 export function Chat({ className }: Props) {
-  const modelId = 'gpt-5'const [input, setInput] = useLocalStorageValue('prompt-input')
+  const modelId = 'gpt-5'
+  const [input, setInput] = useLocalStorageValue('prompt-input')
   const mapDataToState = useDataStateMapper()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { messages, sendMessage, status } = useChat<ChatUIMessage>({
