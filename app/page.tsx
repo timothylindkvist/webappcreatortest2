@@ -4,7 +4,6 @@ import { Header } from './header'
 import { Logs } from './logs'
 import { Preview } from './preview'
 import { TabItem, TabContent, TabGroup } from '@/components/tabs'
-import { Welcome } from '@/components/modals/welcome'
 import { cookies } from 'next/headers'
 import { hideBanner } from '@/app/actions'
 
