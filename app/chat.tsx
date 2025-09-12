@@ -92,7 +92,7 @@ export function Chat({ className }: Props) {
       </div>
 
       <form
-        className="flex space-x-1 p-2 border-t border-primary/18 bg-background items-center"
+        className="card sticky bottom-0 left-0 right-0 mx-2 mb-2 flex gap-2 p-3 items-center backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:supports-[backdrop-filter]:bg-neutral-900/40"
         onSubmit={async (event) => {
           event.preventDefault()
           validateAndSubmitMessage(input)
@@ -104,14 +104,30 @@ export function Chat({ className }: Props) {
             setModelId(newModelId)
           }}
         />
-        <Input
-          className="w-full text-sm border-0 bg-background font-mono rounded-sm"
+        
+        {/* Quick actions */}
+        <ul className="hidden md:flex gap-2 mr-2">
+          {['Create a SaaS landing page', 'Add a pricing section', 'Generate a Next.js blog', 'Explain this error'].map((q) => (
+            <li key={q}>
+              <button
+                type="button"
+                className="px-3 py-1 text-xs rounded-full border hover:bg-black/5 dark:hover:bg-white/10 transition"
+                onClick={() => setInput(q)}
+                title="Insert into input"
+              >
+                {q}
+              </button>
+            </li>
+          ))}
+        </ul>
+<Input
+          className="w-full text-sm bg-transparent font-mono rounded-xl focus:outline-none"
           disabled={status === 'streaming' || status === 'submitted'}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
           value={input}
         />
-        <Button type="submit" disabled={status !== 'ready' || !input.trim()}>
+        <Button className="btn-primary" type="submit" disabled={status !== 'ready' || !input.trim()}>
           {status === 'streaming' || status === 'submitted' ? (
             <MoonLoader color="currentColor" size={16} />
           ) : (

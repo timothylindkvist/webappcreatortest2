@@ -181,3 +181,21 @@ button, .btn{ font: inherit }
 .input{ width:100%; padding:.75rem 1rem; border-radius: var(--radius-sm); border:1px solid var(--border); background:var(--card); color:var(--text) }
 .navbar{ position:sticky; top:0; z-index:50; backdrop-filter: saturate(1.2) blur(6px); background: color-mix(in hsl, var(--bg) 80%, transparent); border-bottom:1px solid var(--border) }
 
+
+
+/* --- UX Refresh: glass + scrollbars --- */
+:root {
+  --radius: 14px;
+}
+* { scrollbar-width: thin; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: color-mix(in oklab, canvasText 30%, transparent); border-radius: 9999px; }
+.card {
+  @apply rounded-2xl border border-black/5 dark:border-white/10 bg-white/70 dark:bg-neutral-900/50 backdrop-blur supports-[backdrop-filter]:bg-white/40;
+}
+.btn-primary {
+  @apply rounded-xl px-4 py-2 font-medium shadow-sm hover:shadow transition-all active:scale-[0.99];
+}
+input, textarea {
+  @apply rounded-xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-900/60 backdrop-blur focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/20;
+}
