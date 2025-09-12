@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 
-// Make sure you set OPENAI_API_KEY in Vercel dashboard
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY as string
 
 export async function POST(req: NextRequest) {
@@ -10,13 +9,12 @@ export async function POST(req: NextRequest) {
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5',   // you wanted GPT-5
+        model: 'gpt-5',
         messages,
-        stream: false,    // set to true if you want streaming
       }),
     })
 
