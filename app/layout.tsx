@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-<header className=\"navbar\"><div className=\"container inner\" style={{display:'flex',alignItems:'center',gap:'1rem',padding:'.8rem 0'}}><div className=\"brand\" style={{fontWeight:700}}>Vibe</div><nav style={{marginLeft:'auto',display:'flex',gap:'.5rem',alignItems:'center'}}><a href=\"/\" aria-current=\"page\">Home</a><a href=\"/projects\">Projects</a><a href=\"/about\">About</a><ThemeToggle/></nav></div></header>
+
         <NuqsAdapter><AppShell>{children}</AppShell></NuqsAdapter>
         <Toaster />
         <SandboxState />
