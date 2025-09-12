@@ -90,19 +90,6 @@ export function Chat({ className }: Props) {
         )}
       </div>
 
-      <form
-        className="card sticky bottom-0 left-0 right-0 mx-2 mb-2 flex gap-2 p-3 items-center backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:supports-[backdrop-filter]:bg-neutral-900/40"
-        onSubmit={async (event) => {
-          event.preventDefault()
-          validateAndSubmitMessage(input)
-        }}
-      >
-        <ModelSelector
-          modelId={modelId}
-          onModelChange={(newModelId: string) => {
-            setModelId(newModelId)
-          }}
-        />
         
         {/* Quick actions */}
         <ul className="hidden md:flex gap-2 mr-2">
