@@ -1,4 +1,3 @@
-import { ToggleWelcome } from '@/components/modals/welcome'
 import { VercelDashed } from '@/components/icons/vercel-dashed'
 import { cn } from '@/lib/utils'
 
