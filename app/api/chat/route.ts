@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     })
 
     // IMPORTANT: This returns an AI SDK DataStream that @ai-sdk/react/useChat expects
-    return result.toDataStreamResponse()
+  return result.toTextStreamResponse()
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message ?? 'Unknown error' }), {
       status: 500,
