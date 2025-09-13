@@ -3,14 +3,16 @@ import { useState } from 'react';
 import { useBuilder } from './builder-context';
 import { streamChat } from '@/lib/aiStream';
 
+type Msg = { role: 'user' | 'assistant'; content: string };
+
 export default function ChatWidget() {
   const { brief, setBrief, rebuild, data } = useBuilder();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{ role: 'user'|'assistant', content: string }[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([]);
 
   const sendChat = async (content: string) => {
-    const next = [...messages, { role: 'user', content }];
+    const next: Msg[] = [...messages, { role: 'user', content }];
     setMessages(next);
     const res = await streamChat(next, { site: data, brief });
     setMessages([...next, { role: 'assistant', content: res.text }]);
