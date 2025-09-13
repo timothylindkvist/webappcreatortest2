@@ -1,92 +1,68 @@
 import OpenAI from 'openai';
+import { NextRequest } from 'next/server';
+
 export const runtime = 'nodejs';
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const MODEL = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_AI_MODEL || 'gpt-5';
 
-const tools: any = [
-  { type: 'function', name: 'setSiteData', description: 'Replace the entire site JSON (all sections, theme, content).', parameters: { type: 'object', additionalProperties: true } },
-  { type: 'function', name: 'updateBrief', description: 'Update the creative brief text.', parameters: { type: 'object', properties: { brief: { type: 'string' } } } },
-  { type: 'function', name: 'applyTheme', description: 'Merge a theme patch (palette, typography, density).', parameters: { type: 'object', additionalProperties: true } },
-  { type: 'function', name: 'addSection', description: 'Add a section by key and payload.', parameters: { type: 'object', properties: { section: { type: 'string' }, payload: { type: 'object' } }, required: ['section'] } },
-  { type: 'function', name: 'removeSection', description: 'Remove a section by key.', parameters: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] } },
-  { type: 'function', name: 'patchSection', description: 'Patch a section by key with a partial update.', parameters: { type: 'object', properties: { section: { type: 'string' }, patch: { type: 'object' } }, required: ['section','patch'] } },
-];
+const CONTRACT = String.raw`
+You are Sidesmith, a helpful website builder assistant.
+ALWAYS respond with ONE JSON object only, no markdown code fences, matching:
+{
+  "reply": string,                 // short helpful message to the user
+  "events": [                      // zero or more UI events for the client to apply
+    { "name": "setSiteData", "args": object } |
+    { "name": "updateBrief", "args": { "brief": string } } |
+    { "name": "applyTheme", "args": object } |
+    { "name": "addSection", "args": { "section": string, "payload": object } } |
+    { "name": "removeSection", "args": { "section": string } } |
+    { "name": "patchSection", "args": { "section": string, "patch": object } }
+  ]
+}
+Return nothing else.
+`;
 
-function extractToolEvents(resp: any) {
-  const events: Array<{ name: string; args: any }> = [];
-  const out = resp?.output ?? [];
-  for (const item of out) {
-    if (item?.type === 'tool_call' && item?.name) {
-      events.push({ name: item.name, args: item.arguments ?? {} });
-    }
-    const content = item?.content;
-    if (Array.isArray(content)) {
-      for (const c of content) {
-        if (c?.type === 'tool_call' && c?.name) {
-          events.push({ name: c.name, args: c.arguments ?? {} });
-        }
-      }
-    }
+function safeExtractJSON(text: string) {
+  try {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1) return null;
+    const payload = text.slice(start, end + 1);
+    return JSON.parse(payload);
+  } catch {
+    return null;
   }
-  return events;
 }
 
-function baseInput(messages: any[], site?: any, brief?: string) {
-  const system = `You are Sidesmith, a chat-based website builder. Prefer calling tools to actually make changes to the site.
-  IMPORTANT: Perform incremental edits with applyTheme / addSection / patchSection / removeSection.
-  NEVER call setSiteData unless the user explicitly says "rebuild", "start over", or "from scratch".
-  When the user asks for visual/styling/content changes, call the appropriate tool with concise, valid JSON.`;
-  const input: any[] = [{ role: 'system', content: system }];
-  if (site) input.push({ role: 'system', content: 'Current site JSON: ' + JSON.stringify(site).slice(0, 6000) });
-  if (brief) input.push({ role: 'system', content: 'Current brief: ' + brief });
-  for (const m of messages) input.push({ role: m.role, content: m.content });
-  return input;
-}
-
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     if (!process.env.OPENAI_API_KEY) {
       return Response.json({ ok: false, error: 'Missing OPENAI_API_KEY' }, { status: 401 });
     }
-    const { messages = [], site, brief } = await req.json().catch(() => ({ messages: [] }));
-    const model = process.env.OPENAI_MODEL || 'gpt-5';
 
-    // Pass 1: normal 'auto' tool choice (let model decide)
-    const resp1 = await client.responses.create({
-      model,
-      input: baseInput(messages, site, brief),
-      tools,
-      tool_choice: 'auto'
+    const body = await req.json();
+    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const brief = body?.brief || '';
+    const site = body?.site || null;
+
+    const sys = `${CONTRACT}\nContext for the site (may be empty):\nBRIEF: ${brief}\nSITE: ${JSON.stringify(site ?? {})}`;
+
+    const resp = await client.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: sys },
+        ...messages.map((m: any) => ({ role: m.role, content: m.content }))
+      ],
+      temperature: 0.4,
     });
-    let reply = (resp1 as any).output_text?.trim?.() || '';
-    let events = extractToolEvents(resp1);
 
-    // Pass 2: if no events, force a tool call
-    if (!events.length) {
-      const resp2 = await client.responses.create({
-        model,
-        input: [
-          ...baseInput(messages, site, brief),
-          { role: 'system', content: 'Now respond ONLY by calling tools to satisfy the last user request. Do not write any assistant text.' }
-        ],
-        tools,
-        tool_choice: 'required'
-      });
-      const forced = extractToolEvents(resp2);
-      if (forced.length) {
-        events = forced;
-        // optional short reply
-        reply = (resp2 as any).output_text?.trim?.() || reply;
-      }
-    }
+    const text = resp.choices?.[0]?.message?.content?.trim() || '';
+    const parsed = safeExtractJSON(text) || { reply: text, events: [] };
 
-    return Response.json({ ok: true, reply, events }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ ok: true, ...parsed }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err: any) {
+    console.error('chat route error', err);
     return Response.json({ ok: false, error: err?.message ?? String(err) }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return Response.json({ ok: true, note: 'POST { messages, site?, brief? }' });
 }
