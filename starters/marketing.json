@@ -1,0 +1,50 @@
+{
+  "sections": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "content": {
+        "headline": "Build a brand people remember",
+        "subheadline": "Strategy-led branding and websites.",
+        "cta": "Get started"
+      }
+    },
+    {
+      "id": "features",
+      "type": "features",
+      "items": [
+        {
+          "title": "Brand Identity"
+        },
+        {
+          "title": "Web Design & Build"
+        },
+        {
+          "title": "Content & Messaging"
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "type": "pricing",
+      "plans": [
+        {
+          "name": "Starter"
+        },
+        {
+          "name": "Growth"
+        },
+        {
+          "name": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "content": {
+        "copyright": "\u00a9 Your Company"
+      }
+    }
+  ]
+}

@@ -1,92 +1,140 @@
-import OpenAI from 'openai';
-export const runtime = 'nodejs';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
+// Simple site builder tool types
+type Site = Record<string, any>;
+
+// Fake persistence in memory for now; your real app likely has a store already.
+// Here we just echo tool-calls back to the client; the UI should apply them.
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const tools: any = [
-  { type: 'function', name: 'setSiteData', description: 'Replace the entire site JSON (all sections, theme, content).', parameters: { type: 'object', additionalProperties: true } },
-  { type: 'function', name: 'updateBrief', description: 'Update the creative brief text.', parameters: { type: 'object', properties: { brief: { type: 'string' } } } },
-  { type: 'function', name: 'applyTheme', description: 'Merge a theme patch (palette, typography, density).', parameters: { type: 'object', additionalProperties: true } },
-  { type: 'function', name: 'addSection', description: 'Add a section by key and payload.', parameters: { type: 'object', properties: { section: { type: 'string' }, payload: { type: 'object' } }, required: ['section'] } },
-  { type: 'function', name: 'removeSection', description: 'Remove a section by key.', parameters: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] } },
-  { type: 'function', name: 'patchSection', description: 'Patch a section by key with a partial update.', parameters: { type: 'object', properties: { section: { type: 'string' }, patch: { type: 'object' } }, required: ['section','patch'] } },
-];
+const SYSTEM = `You are Sidesmith, a website-building assistant.
+IMPORTANT RULES:
+- NEVER rebuild from scratch unless the user explicitly clicked the Rebuild button (intent: rebuild).
+- Prefer incremental changes: applyTheme, patchSection, addSection, removeSection.
+- Respond with a helpful short summary after each tool call.
+- Do not invent results locally; always use a tool for changes.`;
 
-function extractToolEvents(resp: any) {
-  const events: Array<{ name: string; args: any }> = [];
-  const out = resp?.output ?? [];
-  for (const item of out) {
-    if (item?.type === 'tool_call' && item?.name) {
-      events.push({ name: item.name, args: item.arguments ?? {} });
-    }
-    const content = item?.content;
-    if (Array.isArray(content)) {
-      for (const c of content) {
-        if (c?.type === 'tool_call' && c?.name) {
-          events.push({ name: c.name, args: c.arguments ?? {} });
+function incrementalTools() {
+  return [
+    {
+      type: "function",
+      function: {
+        name: "applyTheme",
+        description: "Apply a theme (colors, fonts, spacing) to the current site.",
+        parameters: {
+          type: "object",
+          properties: {
+            theme: { type: "object", additionalProperties: true }
+          },
+          required: ["theme"],
+          additionalProperties: false
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "patchSection",
+        description: "Patch (modify) an existing section by id or key.",
+        parameters: {
+          type: "object",
+          properties: {
+            sectionId: { type: "string" },
+            patch: { type: "object", additionalProperties: true }
+          },
+          required: ["sectionId", "patch"],
+          additionalProperties: false
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "addSection",
+        description: "Add a new section to the site.",
+        parameters: {
+          type: "object",
+          properties: {
+            section: { type: "object", additionalProperties: true },
+            position: { type: "string", enum: ["start","end","before","after"], nullable: true },
+            referenceId: { type: "string", nullable: true }
+          },
+          required: ["section"],
+          additionalProperties: false
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "removeSection",
+        description: "Remove a section from the site.",
+        parameters: {
+          type: "object",
+          properties: {
+            sectionId: { type: "string" }
+          },
+          required: ["sectionId"],
+          additionalProperties: false
         }
       }
     }
-  }
-  return events;
+  ];
 }
 
-function baseInput(messages: any[], site?: any, brief?: string) {
-  const system = `You are Sidesmith, a chat-based website builder. Prefer calling tools to actually make changes to the site.
-  IMPORTANT: Perform incremental edits with applyTheme / addSection / patchSection / removeSection.
-  NEVER call setSiteData unless the user explicitly says "rebuild", "start over", or "from scratch".
-  When the user asks for visual/styling/content changes, call the appropriate tool with concise, valid JSON.`;
-  const input: any[] = [{ role: 'system', content: system }];
-  if (site) input.push({ role: 'system', content: 'Current site JSON: ' + JSON.stringify(site).slice(0, 6000) });
-  if (brief) input.push({ role: 'system', content: 'Current brief: ' + brief });
-  for (const m of messages) input.push({ role: m.role, content: m.content });
-  return input;
-}
-
-
-export async function POST(req: Request) {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      return Response.json({ ok: false, error: 'Missing OPENAI_API_KEY' }, { status: 401 });
-    }
-    const { messages = [], site, brief } = await req.json().catch(() => ({ messages: [] }));
-    const model = process.env.OPENAI_MODEL || 'gpt-5';
-
-    // Pass 1: normal 'auto' tool choice (let model decide)
-    const resp1 = await client.responses.create({
-      model,
-      input: baseInput(messages, site, brief),
-      tools,
-      tool_choice: 'auto'
-    });
-    let reply = (resp1 as any).output_text?.trim?.() || '';
-    let events = extractToolEvents(resp1);
-
-    // Pass 2: if no events, force a tool call
-    if (!events.length) {
-      const resp2 = await client.responses.create({
-        model,
-        input: [
-          ...baseInput(messages, site, brief),
-          { role: 'system', content: 'Now respond ONLY by calling tools to satisfy the last user request. Do not write any assistant text.' }
-        ],
-        tools,
-        tool_choice: 'required'
-      });
-      const forced = extractToolEvents(resp2);
-      if (forced.length) {
-        events = forced;
-        // optional short reply
-        reply = (resp2 as any).output_text?.trim?.() || reply;
+function rebuildTool() {
+  return [
+    {
+      type: "function",
+      function: {
+        name: "setSiteData",
+        description: "Replace the entire site data with the provided site object. Only used after explicit confirmation.",
+        parameters: {
+          type: "object",
+          properties: {
+            site: { type: "object", additionalProperties: true }
+          },
+          required: ["site"],
+          additionalProperties: false
+        }
       }
     }
-
-    return Response.json({ ok: true, reply, events }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (err: any) {
-    return Response.json({ ok: false, error: err?.message ?? String(err) }, { status: 500 });
-  }
+  ];
 }
 
-export async function GET() {
-  return Response.json({ ok: true, note: 'POST { messages, site?, brief? }' });
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { messages, intent, starter } = body || {};
+
+    if (!Array.isArray(messages)) {
+      return NextResponse.json({ error: "Missing messages array" }, { status: 400 });
+    }
+
+    const tools = intent === "rebuild" ? rebuildTool() : incrementalTools();
+
+    const response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-5",
+      messages: [
+        { role: "system", content: SYSTEM },
+        ...messages
+      ],
+      tools,
+      tool_choice: "auto"
+    });
+
+    const msg = response.choices[0].message;
+
+    return NextResponse.json({
+      message: msg,
+      toolCalls: msg.tool_calls ?? []
+    });
+  } catch (err: any) {
+    const code = err?.status ?? 500;
+    return NextResponse.json({
+      error: err?.message || "Server error",
+      details: err?.response?.data || err?.stack
+    }, { status: code });
+  }
 }

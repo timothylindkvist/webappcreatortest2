@@ -1,0 +1,25 @@
+{
+  "sections": [
+    {
+      "id": "sidebar",
+      "type": "sidebar",
+      "items": [
+        {
+          "label": "Getting Started"
+        },
+        {
+          "label": "Guides"
+        },
+        {
+          "label": "API"
+        }
+      ]
+    },
+    {
+      "id": "content",
+      "type": "doc",
+      "title": "Welcome",
+      "body": "Write your docs here."
+    }
+  ]
+}

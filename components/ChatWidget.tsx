@@ -44,7 +44,11 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    \1
+      <div className=\"mb-3\"><RebuildButton onConfirm={async (starter)=>{
+        await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages: [{ role: 'user', content: 'Rebuild' }], intent: 'rebuild', starter })});
+        // The UI should handle clearing site state after rebuild response
+      }} /></div>
       <div className="max-h-80 overflow-auto rounded-xl border border-slate-200 p-3 bg-white space-y-2">
         {messages.map((m, i) => (
           <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
