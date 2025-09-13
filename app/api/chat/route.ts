@@ -1,105 +1,67 @@
 import OpenAI from 'openai';
-
 export const runtime = 'nodejs';
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Tool schema for the model (Responses API tool calling)
-const toolDefs = [
+// Tool definitions the model can call
+const tools: any = [
   {
     type: 'function',
     name: 'setSiteData',
-    description: 'Replace the entire site data object (all sections, theme, etc.).',
-    parameters: {
-      type: 'object',
-      additionalProperties: true
-    }
+    description: 'Replace the entire site JSON (all sections, theme, content).',
+    parameters: { type: 'object', additionalProperties: true }
   },
   {
     type: 'function',
     name: 'updateBrief',
-    description: 'Update the creative brief the user provided.',
-    parameters: {
-      type: 'object',
-      properties: { brief: { type: 'string' } }
-    }
+    description: 'Update the creative brief text.',
+    parameters: { type: 'object', properties: { brief: { type: 'string' } } }
   },
   {
     type: 'function',
     name: 'applyTheme',
-    description: 'Merge a theme patch into the current theme.',
-    parameters: {
-      type: 'object',
-      properties: {
-        vibe: { type: 'string' },
-        palette: {
-          type: 'object',
-          properties: {
-            brand: { type: 'string' },
-            accent: { type: 'string' },
-            background: { type: 'string' },
-            foreground: { type: 'string' }
-          },
-          additionalProperties: true
-        },
-        typography: {
-          type: 'object',
-          properties: { body: { type: 'string' }, headings: { type: 'string' } },
-          additionalProperties: true
-        },
-        density: { type: 'string', enum: ['compact','cozy','comfortable'] }
-      },
-      additionalProperties: true
-    }
+    description: 'Merge a theme patch (palette, typography, density).',
+    parameters: { type: 'object', additionalProperties: true }
   },
   {
     type: 'function',
     name: 'addSection',
-    description: 'Add a section by key with payload.',
-    parameters: {
-      type: 'object',
-      properties: { section: { type: 'string' }, payload: { type: 'object' } },
-      required: ['section'],
-      additionalProperties: true
-    }
+    description: 'Add a section by key and payload.',
+    parameters: { type: 'object', properties: { section: { type: 'string' }, payload: { type: 'object' } }, required: ['section'] }
   },
   {
     type: 'function',
     name: 'removeSection',
     description: 'Remove a section by key.',
-    parameters: {
-      type: 'object',
-      properties: { section: { type: 'string' } },
-      required: ['section']
-    }
+    parameters: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] }
   },
   {
     type: 'function',
     name: 'patchSection',
-    description: 'Patch a section by key.',
-    parameters: {
-      type: 'object',
-      properties: { section: { type: 'string' }, patch: { type: 'object' } },
-      required: ['section','patch'],
-      additionalProperties: true
+    description: 'Patch a section by key with a partial update.',
+    parameters: { type: 'object', properties: { section: { type: 'string' }, patch: { type: 'object' } }, required: ['section','patch'] }
+  }
+];
+
+function extractToolEvents(resp: any) {
+  const events: Array<{ name: string; args: any }> = [];
+  const out = resp?.output ?? [];
+  for (const item of out) {
+    if (item?.type === 'tool_call' && item?.name) {
+      events.push({ name: item.name, args: item.arguments ?? {} });
+    }
+    const content = item?.content;
+    if (Array.isArray(content)) {
+      for (const c of content) {
+        if (c?.type === 'tool_call' && c?.name) {
+          events.push({ name: c.name, args: c.arguments ?? {} });
+        }
+      }
     }
   }
-] as const;
+  return events;
+}
 
-/**
- * Request body:
- * {
- *   messages: { role: 'user'|'assistant'|'system', content: string }[],
- *   site?: any,   // optional current site data (for context)
- *   brief?: string
- * }
- * Response:
- * {
- *   ok: boolean,
- *   reply: string,
- *   events: { name: string, args: any }[]
- * }
- */
 export async function POST(req: Request) {
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -108,40 +70,24 @@ export async function POST(req: Request) {
     const { messages = [], site, brief } = await req.json().catch(() => ({ messages: [] }));
 
     const model = process.env.OPENAI_MODEL || 'gpt-5';
-    const sys =
-      'You are Sidesmith, a chat-based website builder. ' +
-      'Think step-by-step, then EITHER call tools to change the site OR write a short reply. ' +
-      'Prefer tool calls for actionable changes (theme, sections, copy). Keep text replies brief.';
+    const system =
+      'You are Sidesmith, a chat-based website builder. Prefer calling tools to actually make changes to the site. '+
+      'When the user asks for visual/styling/content changes, call the appropriate tool with concise, valid JSON.';
 
-    const rsp = await client.responses.create({
+    const input: any[] = [{ role: 'system', content: system }];
+    if (site) input.push({ role: 'system', content: 'Current site JSON: ' + JSON.stringify(site).slice(0, 6000) });
+    if (brief) input.push({ role: 'system', content: 'Current brief: ' + brief });
+    for (const m of messages) input.push({ role: m.role, content: m.content });
+
+    const resp = await client.responses.create({
       model,
-      input: [
-        { role: 'system', content: sys },
-        ...(site ? [{ role: 'system', content: 'Current site JSON: ' + JSON.stringify(site).slice(0, 6000) }] : []),
-        ...(brief ? [{ role: 'system', content: 'Current brief: ' + brief }] : []),
-        ...messages.map((m: any) => ({ role: m.role, content: m.content }))
-      ],
-      tools: toolDefs as any});
+      input,
+      tools,
+      tool_choice: 'auto'
+    });
 
-    // Extract text reply (if any)
-    const reply = (rsp as any).output_text?.trim?.() || '';
-
-    // Extract tool calls
-    const events: Array<{ name: string; args: any }> = [];
-    const out = (rsp as any).output || [];
-    for (const item of out) {
-      if (item.type === 'tool_call' && item.name) {
-        events.push({ name: item.name, args: item.arguments ?? {} });
-      }
-      // Some SDKs embed tool calls inside message content array
-      if (item.content && Array.isArray(item.content)) {
-        for (const c of item.content) {
-          if (c.type === 'tool_call' && c.name) {
-            events.push({ name: c.name, args: c.arguments ?? {} });
-          }
-        }
-      }
-    }
+    const reply = (resp as any).output_text?.trim?.() || '';
+    const events = extractToolEvents(resp);
 
     return Response.json({ ok: true, reply, events }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err: any) {
@@ -150,5 +96,5 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return Response.json({ ok: true, note: 'POST { messages, site?, brief? } to receive reply + tool events.' });
+  return Response.json({ ok: true, note: 'POST { messages, site?, brief? }' });
 }
