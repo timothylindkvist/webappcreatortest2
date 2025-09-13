@@ -33,7 +33,7 @@ function extractToolEvents(resp: any) {
 
 function baseInput(messages: any[], site?: any, brief?: string) {
   const system =
-    'You are Sidesmith, a chat-based website builder. Prefer calling tools to actually make changes to the site. ' +
+    'You are Sidesmith, a chat-based website builder. Prefer calling tools to actually make changes to the site. IMPORTANT: Perform incremental edits with applyTheme / addSection / patchSection / removeSection. NEVER call setSiteData unless the user explicitly says 'rebuild', 'start over', or 'from scratch'. ' +
     'When the user asks for visual/styling/content changes, call the appropriate tool with concise, valid JSON.';
   const input: any[] = [{ role: 'system', content: system }];
   if (site) input.push({ role: 'system', content: 'Current site JSON: ' + JSON.stringify(site).slice(0, 6000) });

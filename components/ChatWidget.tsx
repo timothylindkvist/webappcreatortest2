@@ -6,93 +6,77 @@ import { streamChat } from '@/lib/aiStream';
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 export default function ChatWidget() {
-  const { brief, setBrief, rebuild, data } = useBuilder();
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const { data, brief, setBrief, rebuild } = useBuilder();
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasBuilt, setHasBuilt] = useState(false);
 
-  const sendChat = async (content: string) => {
-    const next: Msg[] = [...messages, { role: 'user', content }];
-    setMessages(next);
-    const res = await streamChat(next, { site: data, brief });
-    setMessages([...next, { role: 'assistant', content: res.text }]);
-  };
+  const send = async () => {
+    const text = input.trim();
+    if (!text || busy) return;
+    setError(null);
+    setBusy(true);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErr(null);
-    setLoading(true);
     try {
-      await rebuild();
+      if (!hasBuilt) {
+        // Treat the first message as the creative brief; build the initial site via API
+        setBrief(text);
+        setMessages((m) => [...m, { role: 'user', content: text }]);
+        setInput('');
+        await rebuild();
+        setMessages((m) => [...m, { role: 'assistant', content: '✅ Generated the first version of your site from that brief. Tell me what to change next.' }]);
+        setHasBuilt(true);
+      } else {
+        // Subsequent messages are incremental edits via /api/chat
+        const next: Msg[] = [...messages, { role: 'user', content: text }];
+        setMessages(next);
+        setInput('');
+        const res = await streamChat(next, { site: data, brief });
+        setMessages((m) => [...m, { role: 'assistant', content: res.text || '✅ Done.' }]);
+      }
     } catch (e: any) {
-      setErr(e?.message ?? String(e));
+      setError(e?.message ?? String(e));
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <form onSubmit={onSubmit} className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Website brief</label>
-        <textarea
-          value={brief}
-          onChange={(e) => setBrief(e.target.value)}
-          placeholder="e.g., Landing page for a yoga studio in Stockholm..."
-          className="textarea min-h-[110px]"
-        />
-        <button type="submit" disabled={loading} className="btn-primary">
-          {loading ? 'Generating…' : 'Generate site'}
-        </button>
-      </form>
-
-      <div className="h-px bg-slate-200 my-2" />
-
-      <div className="space-y-2">
-        <div className="text-sm font-medium">Chat to edit</div>
-        <ChatInput onSend={sendChat} />
-        {err && <p className="text-sm text-red-600">{err}</p>}
-        <div className="max-h-64 overflow-auto rounded-xl border border-slate-200 p-3 space-y-2 bg-white">
-          {messages.map((m, i) => (
-            <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
-              <span className={
-                m.role === 'user'
+    <div className="flex flex-col gap-3">
+      <div className="max-h-80 overflow-auto rounded-xl border border-slate-200 p-3 bg-white space-y-2">
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
+            <span className={
+              m.role === 'user'
                 ? 'inline-block rounded-2xl bg-brand text-white px-3 py-1.5'
                 : 'inline-block rounded-2xl bg-slate-100 text-slate-800 px-3 py-1.5'
-              }>
-                {m.content}
-              </span>
-            </div>
-          ))}
-          {messages.length === 0 && <div className="muted text-sm">Try: “Make the theme dark and add a pricing section with 3 plans.”</div>}
-        </div>
+            }>
+              {m.content}
+            </span>
+          </div>
+        ))}
+        {messages.length === 0 && (
+          <div className="muted text-sm">
+            Start by telling me what to build. Example: “A sleek landing page for a yoga studio in Stockholm with a pricing section and a contact form.”
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
-
-function ChatInput({ onSend }: { onSend: (text: string) => Promise<void> }) {
-  const [val, setVal] = useState('');
-  return (
-    <div className="flex gap-2">
-      <input
-        className="input flex-1"
-        placeholder="Type a change request…"
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        onKeyDown={async (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (val.trim()) { await onSend(val.trim()); setVal(''); }
-          }
-        }}
-      />
-      <button
-        className="btn-primary"
-        onClick={async () => { if (val.trim()) { await onSend(val.trim()); setVal(''); } }}
-      >
-        Send
-      </button>
+      <div className="flex gap-2">
+        <input
+          className="input flex-1"
+          disabled={busy}
+          placeholder={hasBuilt ? "Type an edit… e.g., “Make the theme pink and change the hero title.”" : "Describe the website you want to build…"}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+        />
+        <button className="btn-primary" disabled={busy} onClick={send}>
+          {busy ? 'Working…' : (hasBuilt ? 'Send' : 'Build')}
+        </button>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

@@ -12,7 +12,7 @@ export default function Page() {
             <div>
               <div className="pill">Sidesmith</div>
               <h1 className="title text-[var(--brand)] mt-2">Website Creator</h1>
-              <p className="subtitle mt-1">Describe your site on the right, then generate.</p>
+              <p className="subtitle mt-1">Chat to build the first version, then keep editing with more messages.</p>
             </div>
           </div>
         </header>
