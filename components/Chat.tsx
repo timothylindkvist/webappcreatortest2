@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useBuilder } from './builder-context';
 import { streamChat } from '@/lib/aiStream';
 
+type Msg = { role: 'user' | 'assistant'; content: string };
+
 export default function Chat() {
   const { data, brief } = useBuilder();
-  const [messages, setMessages] = useState<{ role: 'user'|'assistant'; content: string }[]>([]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,12 +17,13 @@ export default function Chat() {
     if (!text) return;
     setSending(true);
     setError(null);
-    const next = [...messages, { role: 'user', content: text }];
+    const next: Msg[] = [...messages, { role: 'user', content: text }];
     setMessages(next);
     setInput('');
     try {
       const res = await streamChat(next, { site: data, brief });
-      setMessages([...next, { role: 'assistant', content: res.text }]);
+      const withAssistant: Msg[] = [...next, { role: 'assistant', content: res.text }];
+      setMessages(withAssistant);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
