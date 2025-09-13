@@ -58,53 +58,32 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
           : undefined;
 
     setData((cur) => ({
-      cur,
-      theme: {
-        vibe: flat.vibe ?? cur.theme.vibe,
-        typography: flat.typography ?? cur.theme.typography,
-        density: flat.density ?? cur.theme.density,
-        palette: {
-          brand: incomingPalette?.brand ?? cur.theme.palette.brand,
-          accent: incomingPalette?.accent ?? cur.theme.palette.accent,
-          background: incomingPalette?.background ?? cur.theme.palette.background,
-          foreground: incomingPalette?.foreground ?? cur.theme.palette.foreground,
-        },
-      },
-    }));
+    cur,
+    [section]: { (cur as any)[section], (patch || {}) } as any,
+  }));
   };
 
   const addSection: CtxShape['addSection'] = (section, payload) =>
-    setData((cur) => ({ cur, [section]: payload as any }));
+    setData((cur) => ({
+    cur,
+    [section]: { (cur as any)[section], (patch || {}) } as any,
+  }));
 
   const removeSection: CtxShape['removeSection'] = (section) =>
-    setData((cur) => {
-      const next: any = { cur };
-      delete next[section];
-      return next;
-    });
-
-  const patchSection: CtxShape['patchSection'] = (section, patch) =>
-    setData((cur) => ({ cur, [section]: { (cur as any)[section], (patch || {}) } as any }));
+    setData((cur) => ({
+    cur,
+    [section]: { (cur as any)[section], (patch || {}) } as any,
+  }));
 
   const setTypography: CtxShape['setTypography'] = (fonts) => applyTheme({ typography: fonts });
   const setDensity: CtxShape['setDensity'] = (density) => applyTheme({ density });
   const applyStylePreset: CtxShape['applyStylePreset'] = (preset) => applyTheme({ vibe: preset });
 
   const fixImages: CtxShape['fixImages'] = (which = 'all') => {
-    setData((cur) => {
-      const copy: any = structuredClone(cur);
-      const keys: (keyof SiteData)[] =
-        which === 'all' ? (['gallery', 'hero', 'features', 'testimonials'] as any) : [which];
-
-      keys.forEach((k) => {
-        const sec: any = copy[k];
-        if (!sec) return;
-        if (Array.isArray(sec.images)) {
-          sec.images = sec.images.map((im: any, idx: number) => ({
-            src: im?.src || `https://picsum.photos/seed/${String(k)}-${idx}/800/600`,
-            caption: im?.caption || '',
-            alt: im?.alt || im?.caption || `${String(k)} image ${idx + 1}`,
-          }));
+    setData((cur) => ({
+    cur,
+    [section]: { (cur as any)[section], (patch || {}) } as any,
+  }));
         }
       });
 

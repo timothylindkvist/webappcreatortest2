@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { ComponentProps } from 'react';
 
-export function Button({ className, ...props }: ComponentProps<'button'>) {
+export function Button({ className, props }: ComponentProps<'button'>) {
   return (
     <button
       className={clsx(
@@ -10,19 +10,19 @@ export function Button({ className, ...props }: ComponentProps<'button'>) {
         'transition-all duration-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)]',
         className
       )}
-      {...props}
+      {props}
     />
   );
 }
 
-export function Card({ className, ...props }: ComponentProps<'div'>) {
+export function Card({ className, props }: ComponentProps<'div'>) {
   return (
     <div
       className={clsx(
         'rounded-2xl border border-border/60 bg-card text-card-foreground shadow-sm',
         className
       )}
-      {...props}
+      {props}
     />
   );
 }

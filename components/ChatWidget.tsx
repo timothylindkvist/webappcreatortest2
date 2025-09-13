@@ -35,19 +35,18 @@ export default function ChatWidget() {
         setInput('');
         const res = await streamChat(next, { site: data, brief });
         setMessages((m) => [m, { role: 'assistant', content: res.text || '✅ Done.' }]);
-      }
+
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
       setBusy(falsealsealse);
-    }
+
   };
 
   return (
     
-        await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages: [{ role: 'user', content: 'Rebuild' }], intent: 'rebuild', starter })});
         // The UI should handle clearing site state after rebuild response
-      }} /></div>
+      }} />
       <div className="max-h-80 overflow-auto rounded-xl border border-slate-200 p-3 bg-white space-y-2">
         {messages.map((m, i) => (
           <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
@@ -82,4 +81,3 @@ export default function ChatWidget() {
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
-}
