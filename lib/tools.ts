@@ -11,7 +11,7 @@ export const tool = <T extends ToolDef>(t: T) => t;
 export const tools = {
   setSiteData: tool({
     description: "Replace the entire site data object (all sections, theme, etc.).",
-    parameters: z.object({ site: z.any() }),
+    parameters: z.any(),
     async execute(args: any) {
       return { ok: true, applied: "setSiteData", size: typeof args === "object" ? Object.keys(args || {}).length : 0 };
     },
@@ -33,7 +33,7 @@ export const tools = {
         background: z.string().optional(),
         foreground: z.string().optional(),
       }).partial().optional(),
-      typography: z.object({ body: z.string().optional(), headings: z.string().optional() }).optional()partial().optional(),
+      typography: z.object({ body: z.string().optional(), headings: z.string().optional() }).partial().optional(),
       density: z.enum(["compact", "cozy", "comfortable"]).optional(),
     }).partial(),
     async execute(args: any) {

@@ -101,7 +101,7 @@ function rebuildTool() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, intent, starter } = body || {};
+    const { messages, intent } = body || {};
 
     if (!Array.isArray(messages)) {
       return NextResponse.json({ error: "Missing messages array" }, { status: 400 });

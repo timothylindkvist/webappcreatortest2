@@ -19,13 +19,8 @@ export default function Page() {
               await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  messages: [{ role: 'user', content: 'Rebuild' }],
-                  intent: 'rebuild',
-                  starter,
-                }),
+                body: JSON.stringify({ messages: [{ role: 'user', content: 'Rebuild' }], intent: 'rebuild', starter }),
               });
-              // Optionally clear local builder state after reset
             }} />
           </div>
         </header>
