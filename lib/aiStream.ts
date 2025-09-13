@@ -13,6 +13,6 @@ export async function streamChat(messages: ChatMessage[], ctx?: { site?: any; br
     throw new Error(`Chat failed: ${res.status} ${txt}`);
   }
   const json = await res.json();
-  if (Array.isArray(json?.events)) handleToolEvents(json.events);
+  if (Array.isArray(json?.events)) { console.debug('sidesmith:events', json.events); handleToolEvents(json.events); }
   return { ok: true, text: json?.reply || '' };
 }
