@@ -5,6 +5,10 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: { extend: {} },
+  theme: {
+    extend: {
+      colors: { brand: "#4f46e5" }
+    }
+  },
   plugins: [],
 }
