@@ -39,12 +39,12 @@ export default function ChatWidget() {
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
-      setBusy(false);
+      setBusy(falsealse);
     }
   };
 
   return (
-    \1
+    
       <div className=\"mb-3\"><RebuildButton onConfirm={async (starter)=>{
         await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages: [{ role: 'user', content: 'Rebuild' }], intent: 'rebuild', starter })});
         // The UI should handle clearing site state after rebuild response

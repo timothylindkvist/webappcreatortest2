@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// Simple site builder tool types
-type Site = Record<string, any>;
-
-// Fake persistence in memory for now; your real app likely has a store already.
-// Here we just echo tool-calls back to the client; the UI should apply them.
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM = `You are Sidesmith, a website-building assistant.
-IMPORTANT RULES:
-- NEVER rebuild from scratch unless the user explicitly clicked the Rebuild button (intent: rebuild).
+RULES:
+- NEVER rebuild from scratch unless the user clicked the Rebuild button (intent: rebuild).
 - Prefer incremental changes: applyTheme, patchSection, addSection, removeSection.
-- Respond with a helpful short summary after each tool call.
-- Do not invent results locally; always use a tool for changes.`;
+- Respond with a short helpful summary after each tool call.
+- Always call a tool for changes; do not simulate results.`;
 
 function incrementalTools() {
   return [

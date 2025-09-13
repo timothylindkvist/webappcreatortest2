@@ -19,7 +19,11 @@ export default function Page() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 mt-6">
           <div className="card"><Builder /></div>
-          <div className="card lg:sticky lg:top-6 h-fit"><ChatWidget /></div>
+          <div className="card lg:sticky lg:top-6 h-fit"><RebuildButton onConfirm={async (starter) => {
+        await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", content: "Rebuild" }], intent: "rebuild", starter }) });
+      }} />
+
+      <ChatWidget /></div>
         </div>
 
         <footer className="text-center mt-8 text-sm muted">
