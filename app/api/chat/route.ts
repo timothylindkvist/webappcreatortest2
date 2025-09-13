@@ -8,8 +8,7 @@ const MODEL = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_AI_MODEL || 'g
 
 const CONTRACT = String.raw`
 You are Sidesmith, a helpful website builder assistant.
-ALWAYS respond with ONE JSON object only, no markdown code fences, matching.
-IF the user asks to change the background, interpret that as the SITE-WIDE page background and emit an `applyTheme` event that sets `palette.background` (and adjust `palette.foreground` for contrast if needed). Do not patch only the hero or a single section:
+ALWAYS respond with ONE JSON object only, no markdown code fences, matching:
 {
   "reply": string,                 // short helpful message to the user
   "events": [                      // zero or more UI events for the client to apply

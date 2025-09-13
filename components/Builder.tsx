@@ -15,7 +15,7 @@ export default function Builder() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 p-8 bg-[var(--background)] text-[var(--foreground)]">
+      <section className="rounded-2xl border border-muted p-8 bg-[var(--background)] text-[var(--foreground)]">
         <h1 className="text-3xl md:text-4xl font-bold text-[var(--brand)]">{data.hero?.title}</h1>
         <p className="mt-2 subtitle">{data.hero?.subtitle}</p>
       </section>
@@ -32,7 +32,7 @@ export default function Builder() {
           <h2 className="text-xl font-semibold">{data.features.title || 'Features'}</h2>
           <ul className="mt-4 grid gap-4 md:grid-cols-2">
             {data.features.items.map((it, i) => (
-              <li key={i} className="border border-slate-200 rounded-xl p-4">
+              <li key={i} className="border border-muted rounded-xl p-4">
                 <div className="font-medium">{it.title}</div>
                 <div className="muted">{it.body}</div>
               </li>
@@ -46,7 +46,7 @@ export default function Builder() {
           <h2 className="text-xl font-semibold">{data.pricing.title || 'Pricing'}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {data.pricing.plans.map((p, i) => (
-              <div key={i} className="border border-slate-200 rounded-xl p-4">
+              <div key={i} className="border border-muted rounded-xl p-4">
                 <div className="text-lg font-semibold">{p.name}</div>
                 <div className="muted">{p.price}</div>
                 <ul className="mt-3 list-disc list-inside muted space-y-1">
