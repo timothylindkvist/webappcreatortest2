@@ -121,9 +121,7 @@ export async function POST(req: Request) {
         ...(brief ? [{ role: 'system', content: 'Current brief: ' + brief }] : []),
         ...messages.map((m: any) => ({ role: m.role, content: m.content }))
       ],
-      tools: toolDefs as any,
-      temperature: 0.3
-    });
+      tools: toolDefs as any});
 
     // Extract text reply (if any)
     const reply = (rsp as any).output_text?.trim?.() || '';

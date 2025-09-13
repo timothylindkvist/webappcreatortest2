@@ -24,7 +24,6 @@ export async function GET(_req: NextRequest) {
           { role: "system", content: "You are a test system." },
           { role: "user", content: "Reply with the word PONG only." },
         ],
-        temperature: 0,
       }),
     });
 

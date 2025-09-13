@@ -40,9 +40,7 @@ export async function POST(req: Request) {
       model,
       instructions:
         'You are a website generator. Given a short business brief, output a complete SiteData JSON with tasteful, production-ready copy. Keep it concise.',
-      input: `Brief:\n${brief}\n\n${SCHEMA_HINT}`,
-      temperature: 0.3
-    });
+      input: `Brief:\n${brief}\n\n${SCHEMA_HINT}`});
 
     const text = (rsp as any).output_text?.trim() || '';
     const start = text.indexOf('{');
