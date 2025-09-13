@@ -23,29 +23,28 @@ export default function ChatWidget() {
       if (!hasBuilt) {
         // Treat the first message as the creative brief; build the initial site via API
         setBrief(text);
-        setMessages((m) => [...m, { role: 'user', content: text }]);
+        setMessages((m) => [m, { role: 'user', content: text }]);
         setInput('');
         await rebuild();
-        setMessages((m) => [...m, { role: 'assistant', content: '✅ Generated the first version of your site from that brief. Tell me what to change next.' }]);
+        setMessages((m) => [m, { role: 'assistant', content: '✅ Generated the first version of your site from that brief. Tell me what to change next.' }]);
         setHasBuilt(true);
       } else {
         // Subsequent messages are incremental edits via /api/chat
-        const next: Msg[] = [...messages, { role: 'user', content: text }];
+        const next: Msg[] = [messages, { role: 'user', content: text }];
         setMessages(next);
         setInput('');
         const res = await streamChat(next, { site: data, brief });
-        setMessages((m) => [...m, { role: 'assistant', content: res.text || '✅ Done.' }]);
+        setMessages((m) => [m, { role: 'assistant', content: res.text || '✅ Done.' }]);
       }
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
-      setBusy(falsealse);
+      setBusy(falsealsealse);
     }
   };
 
   return (
     
-      <div className=\"mb-3\"><RebuildButton onConfirm={async (starter)=>{
         await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages: [{ role: 'user', content: 'Rebuild' }], intent: 'rebuild', starter })});
         // The UI should handle clearing site state after rebuild response
       }} /></div>

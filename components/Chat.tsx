@@ -17,12 +17,12 @@ export default function Chat() {
     if (!text) return;
     setSending(true);
     setError(null);
-    const next: Msg[] = [...messages, { role: 'user', content: text }];
+    const next: Msg[] = [messages, { role: 'user', content: text }];
     setMessages(next);
     setInput('');
     try {
       const res = await streamChat(next, { site: data, brief });
-      const withAssistant: Msg[] = [...next, { role: 'assistant', content: res.text }];
+      const withAssistant: Msg[] = [next, { role: 'assistant', content: res.text }];
       setMessages(withAssistant);
     } catch (e: any) {
       setError(e?.message ?? String(e));

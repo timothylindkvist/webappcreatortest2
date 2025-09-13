@@ -5,7 +5,7 @@ export type Theme = {
   vibe?: string;
   palette: { brand: string; accent: string; background: string; foreground: string };
   typography?: { body?: string; headings?: string };
-  density?: 'compact' | 'cozy' | 'comfortable';
+  density?: 'compact' | 'cozy' | 'comfortablertable';
 };
 
 export type SiteData = {
@@ -31,7 +31,7 @@ type CtxShape = {
   removeSection: (section: keyof SiteData) => void;
   patchSection: (section: keyof SiteData, patch: any) => void;
   setTypography: (fonts: { body?: string; headings?: string }) => void;
-  setDensity: (density: 'compact' | 'cozy' | 'comfortable') => void;
+  setDensity: (density: 'compact' | 'cozy' | 'comfortablertable') => void;
   applyStylePreset: (preset: string) => void;
   fixImages: (section?: keyof SiteData | 'all') => void;
   redesign: (concept?: string) => void;
@@ -58,7 +58,7 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
           : undefined;
 
     setData((cur) => ({
-      ...cur,
+      cur,
       theme: {
         vibe: flat.vibe ?? cur.theme.vibe,
         typography: flat.typography ?? cur.theme.typography,
@@ -74,17 +74,17 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
   };
 
   const addSection: CtxShape['addSection'] = (section, payload) =>
-    setData((cur) => ({ ...cur, [section]: payload as any }));
+    setData((cur) => ({ cur, [section]: payload as any }));
 
   const removeSection: CtxShape['removeSection'] = (section) =>
     setData((cur) => {
-      const next: any = { ...cur };
+      const next: any = { cur };
       delete next[section];
       return next;
     });
 
   const patchSection: CtxShape['patchSection'] = (section, patch) =>
-    setData((cur) => ({ ...cur, [section]: { ...(cur as any)[section], ...(patch || {}) } as any }));
+    setData((cur) => ({ cur, [section]: { (cur as any)[section], (patch || {}) } as any }));
 
   const setTypography: CtxShape['setTypography'] = (fonts) => applyTheme({ typography: fonts });
   const setDensity: CtxShape['setDensity'] = (density) => applyTheme({ density });
