@@ -21,13 +21,15 @@ export default function ChatWidget() {
 
     try {
       if (!hasBuilt) {
+        // Treat the first message as the creative brief; build the initial site via API
         setBrief(text);
         setMessages((m) => [...m, { role: 'user', content: text }]);
         setInput('');
         await rebuild();
-        setMessages((m) => [...m, { role: 'assistant', content: 'I created the first version of your site from that brief. Tell me what to change next.' }]);
+        setMessages((m) => [...m, { role: 'assistant', content: '✅ Generated the first version of your site from that brief. Tell me what to change next.' }]);
         setHasBuilt(true);
       } else {
+        // Subsequent messages are incremental edits via /api/chat
         const next: Msg[] = [...messages, { role: 'user', content: text }];
         setMessages(next);
         setInput('');
@@ -57,15 +59,15 @@ export default function ChatWidget() {
         ))}
         {messages.length === 0 && (
           <div className="muted text-sm">
-            Try: <em>“Make the theme dark and add a pricing section with 3 plans.”</em>
+            Start by telling me what to build. Example: “A sleek landing page for a yoga studio in Stockholm with a pricing section and a contact form.”
           </div>
         )}
       </div>
-
-      <div className="flex items-center gap-2">
+      <div className="flex gap-2">
         <input
           className="input flex-1"
-          placeholder={hasBuilt ? "Type a change request…" : "Describe your site (this is your brief)..."}
+          disabled={busy}
+          placeholder={hasBuilt ? "Type an edit… e.g., “Make the theme pink and change the hero title.”" : "Describe the website you want to build…"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
