@@ -53,8 +53,7 @@ export async function POST(req: NextRequest) {
       messages: [
         { role: 'system', content: sys },
         ...messages.map((m: any) => ({ role: m.role, content: m.content }))
-      ],
-      temperature: 0.4,
+      ]
     });
 
     const text = resp.choices?.[0]?.message?.content?.trim() || '';

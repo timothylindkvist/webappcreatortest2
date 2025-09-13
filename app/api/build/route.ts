@@ -49,8 +49,7 @@ export async function POST(req: NextRequest) {
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: user }
-      ],
-      temperature: 0.5,
+      ]
     });
 
     const text = resp.choices?.[0]?.message?.content?.trim() || '';
