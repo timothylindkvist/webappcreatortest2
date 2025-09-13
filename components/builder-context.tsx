@@ -112,6 +112,19 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
     });
   };
 
+
+  // Expose handlers for chat tool calls
+  if (typeof window !== 'undefined') {
+    (window as any).__sidesmithTools = {
+      setSiteData: (args: any) => setData(args),
+      updateBrief: (args: any) => setBrief(args?.brief ?? ''),
+      applyTheme: (args: any) => applyTheme(args),
+      addSection: (args: any) => addSection(args?.section as any, args?.payload),
+      removeSection: (args: any) => removeSection(args?.section as any),
+      patchSection: (args: any) => patchSection(args?.section as any, args?.patch),
+    };
+  }
+
   const redesign: CtxShape['redesign'] = () => {
     // placeholder for future AI actions
   };

@@ -1,18 +1,20 @@
+import { handleToolEvents } from './toolRuntime';
+
 export type ChatMessage = { role: 'user'|'assistant'|'system'; content: string };
 
-// Minimal client-side helper that proxies to /api/build using the last user message as the brief.
-export async function streamChat(messages: ChatMessage[]) {
-  const lastUser = [...messages].reverse().find(m => m.role === 'user');
-  const brief = lastUser?.content ?? '';
-  const res = await fetch('/api/build', {
+// The caller (Chat.tsx) can pass messages; we will hit /api/chat,
+// then apply any returned tool events to the live site via BuilderProvider bridge.
+export async function streamChat(messages: ChatMessage[], ctx?: { site?: any; brief?: string }) {
+  const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ brief })
+    body: JSON.stringify({ messages, site: ctx?.site, brief: ctx?.brief })
   });
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`Build failed: ${res.status} ${txt}`);
+    throw new Error(`Chat failed: ${res.status} ${txt}`);
   }
   const json = await res.json();
-  return { ok: true, data: json?.data, text: JSON.stringify(json?.data) };
+  if (Array.isArray(json?.events)) handleToolEvents(json.events);
+  return { ok: true, text: json?.reply || '' };
 }
