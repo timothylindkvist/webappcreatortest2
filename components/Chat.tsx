@@ -1,34 +1,66 @@
-// components/Chat.tsx
-'use client'
-import { useState } from 'react'
-import { streamChat } from '@/lib/aiStream'
-import { handleToolEvent } from '@/lib/toolRuntime'
+'use client';
+import { useState } from 'react';
+import { useBuilder } from './builder-context';
+import { streamChat } from '@/lib/aiStream';
 
 export default function Chat() {
-  const [assistant, setAssistant] = useState('')
+  const { data, brief } = useBuilder();
+  const [messages, setMessages] = useState<{ role: 'user'|'assistant'; content: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function send(messages: any[], state?: any) {
-    setAssistant('')
-    for await (const msg of streamChat({ messages, state })) {
-      if (msg.type === 'assistant') {
-        setAssistant((t) => t + msg.delta)
-      } else if (msg.type === 'toolEvent') {
-        handleToolEvent(msg.event)
-      } else if (msg.type === 'error') {
-        console.error(msg.message)
-      }
+  const send = async () => {
+    const text = input.trim();
+    if (!text) return;
+    setSending(true);
+    setError(null);
+    const next = [...messages, { role: 'user', content: text }];
+    setMessages(next);
+    setInput('');
+    try {
+      const res = await streamChat(next, { site: data, brief });
+      setMessages([...next, { role: 'assistant', content: res.text }]);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setSending(false);
     }
-  }
+  };
 
   return (
-    <div className="p-4 space-y-4">
-      <button
-        className="px-4 py-2 rounded bg-black text-white"
-        onClick={() => send([{ role: 'user', content: 'Create a hero and features section for a SaaS timer app.' }])}
-      >
-        Demo: Build sections
-      </button>
-      <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded">{assistant}</pre>
+    <div className="flex flex-col gap-3">
+      <div className="max-h-64 overflow-auto rounded-xl border border-slate-200 p-3 bg-white space-y-2">
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === 'user' ? 'text-right' : 'text-left'}>
+            <span className={
+              m.role === 'user'
+                ? 'inline-block rounded-2xl bg-brand text-white px-3 py-1.5'
+                : 'inline-block rounded-2xl bg-slate-100 text-slate-800 px-3 py-1.5'
+            }>
+              {m.content}
+            </span>
+          </div>
+        ))}
+        {messages.length === 0 && (
+          <div className="muted text-sm">
+            Try: <em>“Make the theme dark and add a pricing section with 3 plans.”</em>
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          className="input flex-1"
+          placeholder="Type a change request…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+        />
+        <button className="btn-primary" disabled={sending} onClick={send}>
+          {sending ? 'Sending…' : 'Send'}
+        </button>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
-  )
+  );
 }
