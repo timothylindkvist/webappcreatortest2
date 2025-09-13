@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import type { ChatCompletionTool } from "openai/resources/chat/completions";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -10,7 +11,7 @@ RULES:
 - Respond with a short helpful summary after each tool call.
 - Always call a tool for changes; do not simulate results.`;
 
-function incrementalTools() {
+function incrementalTools(): ChatCompletionTool[] {
   return [
     {
       type: "function",
@@ -78,7 +79,7 @@ function incrementalTools() {
   ];
 }
 
-function rebuildTool() {
+function rebuildTool(): ChatCompletionTool[] {
   return [
     {
       type: "function",
