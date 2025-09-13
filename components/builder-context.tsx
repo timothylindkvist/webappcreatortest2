@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Theme = {
   vibe?: string;
@@ -47,6 +47,16 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
     brand: { name: 'Your Brand', tagline: 'Let’s build something great.' },
     hero: { title: 'Describe your site in the chat →', subtitle: 'The assistant will design & edit live.' },
   });
+
+  // Sync global page background/foreground with theme palette
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const bg = data?.theme?.palette?.background;
+      const fg = data?.theme?.palette?.foreground;
+      if (bg) document.body.style.backgroundColor = bg;
+      if (fg) document.body.style.color = fg;
+    }
+  }, [data?.theme?.palette?.background, data?.theme?.palette?.foreground]);
 
   const applyTheme: CtxShape['applyTheme'] = (themeLike) => {
     const flat: any = themeLike || {};
