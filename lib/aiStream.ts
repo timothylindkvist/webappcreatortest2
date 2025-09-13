@@ -2,8 +2,6 @@ import { handleToolEvents } from './toolRuntime';
 
 export type ChatMessage = { role: 'user'|'assistant'|'system'; content: string };
 
-// The caller (Chat.tsx) can pass messages; we will hit /api/chat,
-// then apply any returned tool events to the live site via BuilderProvider bridge.
 export async function streamChat(messages: ChatMessage[], ctx?: { site?: any; brief?: string }) {
   const res = await fetch('/api/chat', {
     method: 'POST',
