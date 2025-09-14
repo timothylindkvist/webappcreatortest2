@@ -32,9 +32,9 @@ export default function Builder() {
           <h2 className="text-xl font-semibold">{data.features.title || 'Features'}</h2>
           <ul className="mt-4 grid gap-4 md:grid-cols-2">
             {data.features.items.map((it, i) => (
-              <li key={i} className="border border-muted rounded-xl p-4">
-                <div className="font-medium">{it.title}</div>
-                <div className="muted">{it.body}</div>
+              <li key={i} className="border border-muted rounded-xl p-4" style={{ background: data.features?.styles?.boxBg, color: data.features?.styles?.boxText, borderColor: data.features?.styles?.boxBorder }}>
+                <div className="font-medium" style={{ color: data.features?.styles?.titleColor }}>{it.title}</div>
+                <div className="muted" style={{ color: data.features?.styles?.descColor }}>{it.body}</div>
               </li>
             ))}
           </ul>
@@ -43,10 +43,10 @@ export default function Builder() {
 
       {data.pricing?.plans?.length ? (
         <section className="card">
-          <h2 className="text-xl font-semibold">{data.pricing.title || 'Pricing'}</h2>
+          <h2 className="text-xl font-semibold" style={{ color: data.pricing?.styles?.titleColor }}>{data.pricing.title || 'Pricing'}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {data.pricing.plans.map((p, i) => (
-              <div key={i} className="border border-muted rounded-xl p-4">
+              <div key={i} className="border border-muted rounded-xl p-4" style={{ background: data.pricing?.styles?.cardBg, color: data.pricing?.styles?.cardText, borderColor: data.pricing?.styles?.cardBorder }}>
                 <div className="text-lg font-semibold">{p.name}</div>
                 <div className="muted">{p.price}</div>
                 <ul className="mt-3 list-disc list-inside muted space-y-1">
