@@ -8,6 +8,8 @@ export type Theme = {
   density?: 'compact' | 'cozy' | 'comfortable';
 };
 
+
+export type Block = { id: string; type: string; data?: any };
 export type SiteData = {
   theme: Theme;
   brand: { name: string; tagline: string; industry?: string };

@@ -13,6 +13,33 @@ export default function Builder() {
     r.style.setProperty('--foreground', data.theme.palette.foreground);
   }, [data.theme]);
 
+
+  // Render ordered blocks if present
+  const blocks = (data as any).blocks as Array<{ id: string; type: string; data?: any }> | undefined;
+  if (Array.isArray(blocks) && blocks.length) {
+    const Map: Record<string, React.ComponentType<any>> = {
+      hero: require('./sections/Hero').default,
+      about: require('./sections/About').default,
+      features: require('./sections/Features').default,
+      gallery: require('./sections/Gallery').default,
+      testimonials: require('./sections/Testimonials').default,
+      pricing: require('./sections/Pricing').default,
+      faq: require('./sections/FAQ').default,
+      cta: require('./sections/CTA').default,
+      game: require('./sections/Game').default,
+      html: require('./sections/Html').default,
+    };
+    return (
+      <div>
+        {blocks.map((b) => {
+          const Comp = Map[b.type];
+          if (!Comp) return null;
+          return <Comp key={b.id} {...(b.data || {})} />;
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-muted p-8 bg-[var(--background)] text-[var(--foreground)]">

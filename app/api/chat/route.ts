@@ -8,11 +8,22 @@ const MODEL = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_AI_MODEL || 'g
 
 const CONTRACT = String.raw`
 You are Sidesmith, a helpful website builder assistant.
+Known section types include: hero, about, features, gallery, testimonials, pricing, faq, cta, game, html. When adding a game, use type 'game' and provide fields like { title, description, rules: string[], scenarios: Array<{ title, prompt, good?, bad? }> }.
 ALWAYS respond with ONE JSON object only, no markdown code fences, matching:
 {
   "reply": string,                 // short helpful message to the user
   "events": [                      // zero or more UI events for the client to apply
     { "name": "setSiteData", "args": object } |
+
+  // Ordered sections API (preferred)
+  // blocks items: { id: string, type: string, data?: any }
+  // Use these to create and arrange sections the user asks for.
+  { "name": "setSections",  "args": { "blocks": Block[] } } |
+  { "name": "insertSection","args": { "index"?: number, "type": string, "data"?: object, "id"?: string } } |
+  { "name": "updateSection","args": { "id": string, "patch": object } } |
+  { "name": "moveSection",  "args": { "id": string, "toIndex": number } } |
+  { "name": "deleteSection","args": { "id": string } } |
+
     { "name": "updateBrief", "args": { "brief": string } } |
     { "name": "applyTheme", "args": object } |
     { "name": "addSection", "args": { "section": string, "payload": object } } |

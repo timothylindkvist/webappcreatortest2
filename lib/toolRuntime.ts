@@ -9,6 +9,11 @@ type Bridge = {
   addSection?: (args: any) => void;
   removeSection?: (args: any) => void;
   patchSection?: (args: any) => void;
+  setSections?: (args: any) => void;
+  insertSection?: (args: any) => void;
+  updateSection?: (args: any) => void;
+  moveSection?: (args: any) => void;
+  deleteSection?: (args: any) => void;
 };
 
 declare global {
