@@ -37,7 +37,7 @@ type CtxShape = {
   applyStylePreset: (preset: string) => void;
   fixImages: (section?: keyof SiteData | 'all') => void;
   redesign: (concept?: string) => void;
-  rebuild: () => Promise<void>;
+  rebuild: (briefOverride?: string) => Promise<void>;
 };
 
 const BuilderCtx = createContext<CtxShape | null>(null);

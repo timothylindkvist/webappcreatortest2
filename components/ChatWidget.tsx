@@ -25,7 +25,7 @@ export default function ChatWidget() {
         setBrief(text);
         setMessages((m) => [...m, { role: 'user', content: text }]);
         setInput('');
-        await rebuild();
+        await rebuild(text);
         setMessages((m) => [...m, { role: 'assistant', content: '✅ Generated the first version of your site from that brief. Tell me what to change next.' }]);
         setHasBuilt(true);
       } else {
