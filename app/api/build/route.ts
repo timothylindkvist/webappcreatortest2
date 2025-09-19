@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const MODEL = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_AI_MODEL || 'gpt-5';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 
 const SCHEMA = String.raw`
 Return ONE JSON object only (no markdown) with this TypeScript shape:
