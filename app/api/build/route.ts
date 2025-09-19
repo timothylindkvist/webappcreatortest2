@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
     const { brief = '' } = await req.json();
 
-    const sys = `${SCHEMA}\nYou generate an initial website JSON from a plain-English founder brief. Prefer concise copy and plausible defaults.`;
+    const sys = `${SCHEMA}\nYou generate an initial website JSON based on the description in the chat. Prefer concise copy and plausible defaults.`;
     const user = `Founder brief:\n${brief}\n\nReturn the full SiteData JSON only.`;
 
     const resp = await client.chat.completions.create({
