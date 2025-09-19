@@ -42,13 +42,15 @@ type CtxShape = {
 
 const BuilderCtx = createContext<CtxShape | null>(null);
 
-export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [brief, setBrief] = useState('');
-  const [data, setData] = useState<SiteData>({
+const initialData: SiteData = {
     theme: { palette: { brand: '#7C3AED', accent: '#06B6D4', background: '#ffffff', foreground: '#0b0f19' }, density: 'cozy' },
     brand: { name: 'Your Brand', tagline: 'Let’s build something great.' },
     hero: { title: 'Describe your site in the chat →', subtitle: 'The assistant will design & edit live.' },
-  });
+  };
+
+export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [brief, setBrief] = useState('');
+  const [data, setData] = useState<SiteData>(initialData);
 
   const applyTheme: CtxShape['applyTheme'] = (themeLike) => {
     const flat: any = themeLike || {};
@@ -124,8 +126,14 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
       addSection: (args: any) => addSection(args?.section as any, args?.payload),
       removeSection: (args: any) => removeSection(args?.section as any),
       patchSection: (args: any) => patchSection(args?.section as any, args?.patch),
+      reset,
     };
   }
+
+  const reset: CtxShape['reset'] = () => {
+    setBrief('');
+    setData(initialData);
+  };
 
   const redesign: CtxShape['redesign'] = () => {
     // placeholder for future AI actions
@@ -160,6 +168,7 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
         setDensity,
         applyStylePreset,
         fixImages,
+        reset,
         redesign,
         rebuild,
       }}
