@@ -61,9 +61,7 @@ export async function POST(req: NextRequest) {
     const sys = `${CONTRACT}\nContext for the site (may be empty):\nBRIEF: ${brief}\nSITE: ${JSON.stringify(site ?? {})}`;
 
     const resp = await client.chat.completions.create({
-      temperature: 0.3,
       response_format: { type: 'json_object' },
-      temperature: 0.3,
       model: MODEL,
       messages: [
         { role: 'system', content: sys },

@@ -49,9 +49,7 @@ ${brief}
 Return the full SiteData JSON only.`;
 
     const resp = await client.chat.completions.create({
-      temperature: 0.2,
       response_format: { type: 'json_object' },
-      temperature: 0.2,
       model: MODEL,
       messages: [
         { role: 'system', content: sys },
@@ -70,10 +68,8 @@ Return the full SiteData JSON only.`;
     const hay = JSON.stringify(data).toLowerCase();
     if (tokens.length && !tokens.some(t => hay.includes(t))) {
       const resp2 = await client.chat.completions.create({
-      temperature: 0.2,
         model: MODEL,
         response_format: { type: 'json_object' },
-        temperature: 0.1,
         messages: [
           { role: 'system', content: sys + '\nYou must explicitly reflect the brief subject in brand, hero, and copy.' },
           { role: 'user', content: user }
