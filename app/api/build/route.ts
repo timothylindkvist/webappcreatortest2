@@ -6,7 +6,7 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL || process.env.NEXT_PUBLIC_AI_MODEL || 'gpt-5-mini';
 
 const SCHEMA = String.raw`
-Return ONE JSON object only (no markdown, no prose, no code fences). It MUST match this TypeScript shape:
+Return ONE JSON object only (no markdown) with this TypeScript shape:
 type Theme = {
   vibe?: string;
   palette: { brand: string; accent: string; background: string; foreground: string };
@@ -42,16 +42,17 @@ export async function POST(req: NextRequest) {
     const { brief = '' } = await req.json();
 
     const sys = `${SCHEMA}
-You generate an initial website JSON from a plain-English site brief. Be faithful to the domain (industry, audience, tone). Prefer concise copy and plausible defaults. Output strictly valid JSON.`;
-    const user = `Site brief:
+You generate an initial website JSON from a plain-English site brief. Be faithful to the subject/domain and echo it in brand, hero, and copy. Keep copy concise. Output valid JSON only.`;
+const user = `Site brief:
 ${brief}
 
 Return the full SiteData JSON only.`;
 
     const resp = await client.chat.completions.create({
       temperature: 0.2,
-      model: MODEL,
       response_format: { type: 'json_object' },
+      temperature: 0.2,
+      model: MODEL,
       messages: [
         { role: 'system', content: sys },
         { role: 'user', content: user }
@@ -63,21 +64,19 @@ Return the full SiteData JSON only.`;
     if (!data) {
       return Response.json({ ok: false, error: 'Model did not return JSON', raw: text }, { status: 502 });
     }
-
-    // Lightweight sanity check: ensure key nouns from the brief appear in the result
+    // Lightweight sanity check: ensure brief topic appears in output
     const low = (s: string) => (s || '').toLowerCase();
-    const briefTokens = Array.from(new Set(low(brief).split(/[^a-z0-9]+/).filter(t => t.length > 3)));
+    const tokens = Array.from(new Set(low(brief).split(/[^a-z0-9]+/).filter(t => t.length > 3)));
     const hay = JSON.stringify(data).toLowerCase();
-    const hits = briefTokens.filter(t => hay.includes(t));
-    if (briefTokens.length > 0 && hits.length === 0) {
-      // Regenerate with a stricter instruction
+    if (tokens.length && !tokens.some(t => hay.includes(t))) {
       const resp2 = await client.chat.completions.create({
+      temperature: 0.2,
         model: MODEL,
         response_format: { type: 'json_object' },
         temperature: 0.1,
         messages: [
-          { role: 'system', content: sys + "\nYou must explicitly reflect the subject of the brief in brand, hero, and copy." },
-          { role: 'user', content: user + "\n\nYou did not reflect the brief topic previously. Regenerate faithfully." }
+          { role: 'system', content: sys + '\nYou must explicitly reflect the brief subject in brand, hero, and copy.' },
+          { role: 'user', content: user }
         ]
       });
       const text2 = resp2.choices?.[0]?.message?.content?.trim() || '';
@@ -86,7 +85,6 @@ Return the full SiteData JSON only.`;
         return Response.json({ ok: true, data: data2 }, { headers: { 'Cache-Control': 'no-store' } });
       }
     }
-
     return Response.json({ ok: true, data }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err: any) {
     console.error('build route error', err);

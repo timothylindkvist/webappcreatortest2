@@ -1,5 +1,7 @@
 'use client';
 import { useEffect } from 'react';
+import Game from './sections/Game';
+import Html from './sections/Html';
 import { useBuilder } from './builder-context';
 
 export default function Builder() {
@@ -84,6 +86,15 @@ export default function Builder() {
           </div>
         </section>
       ) : null}
+      {(data as any).game ? <Game {...(data as any).game} /> : null}
+      {(data as any).html ? <Html html={(data as any).html?.content || (data as any).html || ''} /> : null}
+      {(data as any).history ? (
+        <section className="card">
+          <h2 className="section-title">{(data as any).history?.title || 'Our History'}</h2>
+          <div className="prose muted">{(data as any).history?.body}</div>
+        </section>
+      ) : null}
+
     </div>
   );
 }

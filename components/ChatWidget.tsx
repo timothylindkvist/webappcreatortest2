@@ -13,7 +13,7 @@ export default function ChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [hasBuilt, setHasBuilt] = useState(false);
 
-  // Start a fresh session on every mount/page open
+  // Start a fresh session on mount
   useEffect(() => {
     setMessages([]);
     setHasBuilt(false);

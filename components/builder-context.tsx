@@ -23,7 +23,7 @@ export type SiteData = {
   cta?: { title?: string; subtitle?: string; button?: { label: string; href?: string } };
 };
 
-type CtxShape = {
+export type CtxShape = {
   brief: string;
   setBrief: (b: string) => void;
   data: SiteData;
@@ -117,6 +117,35 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
   };
 
 
+  const reset: CtxShape['reset'] = () => { setBrief(''); setData(initialData); };
+
+
+  // Ordered-sections API handlers (mapped to top-level SiteData keys)
+  const setSections = ({ blocks = [] as Array<{ id?: string; type: string; data?: any }> } = {}) => {
+    setData((cur) => {
+      const next: any = { ...cur };
+      for (const b of blocks) {
+        if (!b?.type) continue;
+        next[b.type] = b.data ?? {};
+      }
+      return next;
+    });
+  };
+  const insertSection = ({ type, data }: { type: string; data?: any }) => {
+    setData((cur) => ({ ...(cur as any), [type]: data ?? {} }));
+  };
+  const updateSection = ({ id, patch }: { id: string; patch?: any }) => {
+    setData((cur) => ({ ...(cur as any), [id]: { ...(cur as any)[id], ...(patch ?? {}) } }));
+  };
+  const moveSection = (_: { id: string; toIndex: number }) => { /* no-op in current UI */ };
+  const deleteSection = ({ id }: { id: string }) => {
+    setData((cur) => {
+      const next: any = { ...cur };
+      delete next[id];
+      return next;
+    });
+  };
+
   // Expose handlers for chat tool calls
   if (typeof window !== 'undefined') {
     (window as any).__sidesmithTools = {
@@ -126,24 +155,31 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
       addSection: (args: any) => addSection(args?.section as any, args?.payload),
       removeSection: (args: any) => removeSection(args?.section as any),
       patchSection: (args: any) => patchSection(args?.section as any, args?.patch),
+      setSections,
+      insertSection,
+      updateSection,
+      moveSection,
+      deleteSection,
+      reset,
+      setSections,
+      insertSection,
+      updateSection,
+      moveSection,
+      deleteSection,
       reset,
     };
   }
-
-  const reset: CtxShape['reset'] = () => {
-    setBrief('');
-    setData(initialData);
-  };
 
   const redesign: CtxShape['redesign'] = () => {
     // placeholder for future AI actions
   };
 
-  const rebuild: CtxShape['rebuild'] = async () => {
+  const rebuild: CtxShape['rebuild'] = async (briefOverride?: string) => {
+    const _brief = typeof briefOverride === 'string' ? briefOverride : brief;
     const res = await fetch('/api/build', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brief }),
+      body: JSON.stringify({ brief: _brief }),
     });
     if (!res.ok) {
       const errText = await res.text();
@@ -168,7 +204,6 @@ export const BuilderProvider: React.FC<React.PropsWithChildren> = ({ children })
         setDensity,
         applyStylePreset,
         fixImages,
-        reset,
         redesign,
         rebuild,
       }}
